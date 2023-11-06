@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC <h1>Ingestion in Databricks</h1>
+# MAGIC <h1>Reading Data in Databricks</h1>
 
 # COMMAND ----------
 
