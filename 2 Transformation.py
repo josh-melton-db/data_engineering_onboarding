@@ -1,6 +1,8 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC <h1>Transformation in Databricks</h1>
+# MAGIC #Transformation in Databricks
+# MAGIC </br>
+# MAGIC This notebook assumes you've already completed notebook 1 Data Ingestion
 
 # COMMAND ----------
 
@@ -56,7 +58,7 @@ joined_df.write.mode('overwrite').saveAsTable(config['silver_table']) # write to
 
 # DBTITLE 1,Aggregate and get a count of defects
 silver_df = spark.read.table(config['silver_table'])
-summed_df = silver_df.groupBy('defect').count() # Perform a group by on the defect column to get counts
+summed_df = silver_df.groupBy('defect', 'press').count() # Perform a group by on the defect column to get counts per press type
 summed_df.write.mode('overwrite').saveAsTable(config['gold_table'])
 spark.read.table(config['gold_table']).display()
 

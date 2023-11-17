@@ -11,6 +11,7 @@ def get_config(spark):
       'defect_table' : f'{schema}.defect_bronze',
       'silver_table' : f'{schema}.sensor_silver',
       'gold_table' : f'{schema}.sensor_gold',
+      'tuned_bronze_table' : f'{schema}.sensor_bronze_clustered',
       'csv_staging' : f'/{current_user}_onboarding/csv_staging',
       'checkpoint_location' : f'/{current_user}_onboarding/sensor_checkpoints',
       'rows_per_run' : num_rows,
