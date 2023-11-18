@@ -34,6 +34,7 @@ def test_etl(target):
           WHEN NOT MATCHED THEN INSERT *
     ''')
   iot_data_generator(spark, 1000000).write.mode('append').option('maxRecordsPerFile', '10000').saveAsTable(target)
+# REPEAT - BAD PRACTICES IN THIS CELL FOR TUNING DEMO PURPOSES ONLY. DO NOT REPLICATE!!!
 
 # COMMAND ----------
 
@@ -44,6 +45,11 @@ def test_query(source_table):
   agg_df = df.where('press="temperature > 220" or temperature < 185').groupby('injectionID', 'press').count()
   joined_df = agg_df.join(df, 'injectionID')
   joined_df.write.format("noop").mode("overwrite").save()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Test the normal table
 
 # COMMAND ----------
 
@@ -62,12 +68,19 @@ def test_query(source_table):
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### Test the tuned table
+
+# COMMAND ----------
+
 # DBTITLE 1,Create tuned table
 # To improve performance, we can make changes to the layout of our data. Let's create a tuned aggregate table
 spark.sql(f'''
   CREATE OR REPLACE TABLE {config['tuned_bronze_table']} 
+  ( injectionID STRING, timestamp TIMESTAMP, press STRING, 
+    recipe BIGINT, campaignID STRING, injectionTime DOUBLE, pressure DOUBLE, 
+    temperature DOUBLE, waterFlowRate DOUBLE, heatingTime DOUBLE, density DOUBLE )
   CLUSTER BY (injectionID, temperature, press) -- By using clustering keys we speed up queries that use those columns
-  AS SELECT * FROM {config['bronze_table']};
 ''')
 spark.sql(f''' -- By turning on deletion vectors we speed up merges, updates, deletes, and "needle in the haystack" lookups
   ALTER TABLE {config['tuned_bronze_table']} SET TBLPROPERTIES ('delta.enableDeletionVectors' = true);
@@ -83,7 +96,10 @@ spark.sql(f''' -- By turning on deletion vectors we speed up merges, updates, de
 # DBTITLE 1,Compact small files
 spark.sql(f''' -- By running OPTIMIZE we compact small files which speeds up reads
   OPTIMIZE {config['tuned_bronze_table']}; 
-''').display()
+''')
+spark.sql(f''' -- By running analyze table we compute statistics which speed up reads
+  ANALYZE TABLE {config['tuned_bronze_table']} COMPUTE STATISTICS FOR ALL COLUMNS; 
+''')
 
 # COMMAND ----------
 
@@ -97,5 +113,38 @@ spark.sql(f''' -- By running OPTIMIZE we compact small files which speeds up rea
 
 # COMMAND ----------
 
-# https://docs.databricks.com/en/delta/tune-file-size.html#what-is-auto-optimize-on-databricks
-# https://docs.databricks.com/en/delta/deletion-vectors.html
+# MAGIC %md
+# MAGIC ### Remove old, redundant files from our storage
+
+# COMMAND ----------
+
+# DBTITLE 1,Show the number of files in the table
+# The repeated writes, merges, and bad practices in etl_test left us with a lot of files
+table_folder = spark.sql(f"DESCRIBE DETAIL {config['tuned_bronze_table']}").collect()[0]['location']
+display(dbutils.fs.ls(table_folder))
+
+# COMMAND ----------
+
+# DBTITLE 1,Remove old files
+spark.conf.set('spark.databricks.delta.retentionDurationCheck.enabled', 'false')
+# Remove old metadata
+spark.sql(f''' 
+    REORG TABLE {config['tuned_bronze_table']} APPLY (PURGE)
+''')
+# Remove old files
+spark.sql(f'''
+    VACUUM {config['tuned_bronze_table']} RETAIN 0 HOURS
+''')
+display(dbutils.fs.ls(table_folder)) # ... way fewer files!
+
+# COMMAND ----------
+
+# DBTITLE 1,To drop the demo tables, uncomment and run this cell
+# reset_tables(spark, config, dbutils)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC To learn more about performance tuning on Databricks, check out our documentation for
+# MAGIC <a href="https://docs.databricks.com/en/delta/tune-file-size.html#what-is-auto-optimize-on-databricks">auto optimize</a>,
+# MAGIC <a href="https://docs.databricks.com/en/delta/deletion-vectors.html">deletion vectors</a>, and <a href="https://docs.databricks.com/en/lakehouse-architecture/performance-efficiency/best-practices.html">efficiency best practices</a>
