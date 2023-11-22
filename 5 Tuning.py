@@ -45,7 +45,7 @@ def test_etl(target):
 def test_query(source_table):
   ''' This function is a nonsensical "no operation" query intended to test performance against a source table '''
   df = spark.read.table(source_table)
-  agg_df = df.where('press="temperature > 220" or temperature < 185').groupby('device_id', 'option_number').count()
+  agg_df = df.where('temperature > 220 or temperature < 185').groupby('device_id', 'option_number').count()
   joined_df = agg_df.join(df, 'device_id')
   joined_df.write.format("noop").mode("overwrite").save()
 
@@ -67,7 +67,7 @@ def test_query(source_table):
 # COMMAND ----------
 
 # DBTITLE 1,Time the test query
-# MAGIC %timeit test_query(config['bronze_table'])  # Time the the query on the regular table. This may take a couple minutes
+# MAGIC %timeit test_query(config['bronze_table'])  # Time the the query on the regular table. This may take a couple of minutes
 
 # COMMAND ----------
 
