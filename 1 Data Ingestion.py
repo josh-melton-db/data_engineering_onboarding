@@ -53,7 +53,7 @@ data.write.option('header', 'true').mode('overwrite').csv(config['csv_staging'])
 bronze_incremental_df = (
   spark.readStream.format('cloudFiles') # load in new data from cloud storage
   .option("cloudFiles.format", "csv") # csv files
-  .option("cloudFiles.schemaHints", "timestamp TIMESTAMP, recipe LONG, injectionTime DOUBLE, pressure DOUBLE, temperature DOUBLE, waterFlowRate DOUBLE, heatingTime DOUBLE, density DOUBLE") # give schema hints if known, otherwise defaults to strings
+  .option("cloudFiles.schemaHints", "timestamp TIMESTAMP, option_number LONG, rotation_speed DOUBLE, pressure DOUBLE, temperature DOUBLE, airflow_rate DOUBLE, delay DOUBLE, density DOUBLE") # give schema hints if known, otherwise defaults to strings
   .option('cloudFiles.schemaLocation', config['checkpoint_location']) # infer the rest of the schema and store in the checkpoint
   .option('header', 'true') # headers are expected
   .load(config['csv_staging']) # path to the data

@@ -20,9 +20,9 @@ config = get_config(spark)
 def transform_df(input_df):
   output_df = (
     input_df
-    .where('injectionID is not null')
-    .where('campaignID is not null')
-    .dropDuplicates(['injectionID', 'campaignID'])
+    .where('device_id is not null')
+    .where('factory_id is not null')
+    .dropDuplicates(['device_id', 'factory_id'])
   )
   return output_df
 
@@ -35,8 +35,8 @@ test_df = transform_df(df)
 # COMMAND ----------
 
 # DBTITLE 1,Run tests
-null_count = test_df.where(isnull(col('injectionID'))).count()
-duplicate_count = test_df.groupBy('injectionID', 'campaignID').count().where('count > 1').count()
+null_count = test_df.where(isnull(col('device_id'))).count() # null values?
+duplicate_count = test_df.groupBy('device_id', 'factory_id').count().where('count > 1').count() # duplicate values?
 
 assert null_count == 0
 assert duplicate_count == 0

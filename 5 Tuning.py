@@ -22,14 +22,17 @@ reset_tables(spark, config, dbutils)
 
 # DBTITLE 1,Create test ETL
 def test_etl(target):
-  ''' This function runs a test ETL process against the specified target. It intentionally uses bad practices for demonstration, do not copy!! '''
+  ''' 
+  This function runs a test ETL process against the specified target. 
+  WARNING: This intentionally uses bad practices for demonstration, do not copy!!! 
+  '''
   iot_data_generator(spark, 1).write.mode('append').saveAsTable(target)
   for i in range(3):
-    tuning_test_data = iot_data_generator(spark, 10000).dropDuplicates(['injectionID']).createOrReplaceTempView("new_data")
+    tuning_test_data = iot_data_generator(spark, 10000).dropDuplicates(['device_id']).createOrReplaceTempView("new_data")
     spark.sql(f'''
           MERGE INTO {target} t
           USING new_data s
-          ON s.injectionID = t.injectionID
+          ON s.device_id = t.device_id
           WHEN MATCHED THEN UPDATE SET *
           WHEN NOT MATCHED THEN INSERT *
     ''')
@@ -42,8 +45,8 @@ def test_etl(target):
 def test_query(source_table):
   ''' This function is a nonsensical "no operation" query intended to test performance against a source table '''
   df = spark.read.table(source_table)
-  agg_df = df.where('press="temperature > 220" or temperature < 185').groupby('injectionID', 'press').count()
-  joined_df = agg_df.join(df, 'injectionID')
+  agg_df = df.where('press="temperature > 220" or temperature < 185').groupby('device_id', 'option_number').count()
+  joined_df = agg_df.join(df, 'device_id')
   joined_df.write.format("noop").mode("overwrite").save()
 
 # COMMAND ----------
@@ -77,10 +80,10 @@ def test_query(source_table):
 # To improve performance, we can make changes to the layout of our data. Let's create a tuned aggregate table
 spark.sql(f'''
   CREATE OR REPLACE TABLE {config['tuned_bronze_table']} 
-  ( injectionID STRING, timestamp TIMESTAMP, press STRING, 
-    recipe BIGINT, campaignID STRING, injectionTime DOUBLE, pressure DOUBLE, 
-    temperature DOUBLE, waterFlowRate DOUBLE, heatingTime DOUBLE, density DOUBLE )
-  CLUSTER BY (injectionID, temperature, press) -- By using clustering keys we speed up queries that use those columns
+  ( device_id STRING, timestamp TIMESTAMP, factory_id STRING, 
+    option_number BIGINT, model_id STRING, rotation_speed DOUBLE, pressure DOUBLE, 
+    temperature DOUBLE, airflow_rate DOUBLE, delay DOUBLE, density DOUBLE )
+  CLUSTER BY (device_id, temperature, factory_id) -- By using clustering keys we speed up queries that use those columns
 ''')
 spark.sql(f''' -- By turning on deletion vectors we speed up merges, updates, deletes, and "needle in the haystack" lookups
   ALTER TABLE {config['tuned_bronze_table']} SET TBLPROPERTIES ('delta.enableDeletionVectors' = true);

@@ -29,7 +29,7 @@ iot_data.display()
 # DBTITLE 1,Add some calculations to the data
 from pyspark.sql.functions import *      # import spark's functions to use for transformations
 
-transformed_df = iot_data.withColumn('heatingRate', col('temperature') / col('heatingTime')) # caluclate a new heatingRate column
+transformed_df = iot_data.withColumn('heatingRate', col('temperature') / col('delay')) # caluclate a new heatingRate column
 transformed_df.display()
 
 # COMMAND ----------
@@ -38,11 +38,11 @@ transformed_df.display()
 multi_transformed_df = (
   transformed_df
   .withColumnRenamed('temperature', 'temperatureFahrenheit') # Rename a column
-  .withColumn('heatingRateSqrt', sqrt('heatingRate')) # Take the square root 
-  .where('injectionID is not null')
-  .where('campaignID is not null')
-  .withColumn('compositeID', concat('injectionID', lit(':'), 'campaignID')) # Concatenate two columns and a literal
-  .dropDuplicates(['compositeID', 'timestamp']) # Drop rows with duplicate compositeID and timestamp columns
+  .withColumn('delay_sqrt', sqrt('delay')) # Take the square root 
+  .where('device_id is not null')
+  .where('factory_id is not null')
+  .withColumn('composite_id', concat('device_id', lit(':'), 'factory_id')) # Concatenate two columns and a literal
+  .dropDuplicates(['composite_id', 'timestamp']) # Drop rows with duplicate compositeID + timestamps
   .drop('_rescued_data') # Remove the rescued data column from our schema inference step during ingestion
 )
 multi_transformed_df.display()
@@ -51,14 +51,14 @@ multi_transformed_df.display()
 
 # DBTITLE 1,Join in our defect data
 defect_df = spark.read.table(config['defect_table']) # get the defects column for reporting or train predictive models
-joined_df = multi_transformed_df.join(defect_df, ['timestamp', 'injectionID'], 'left') # left join on timestamp and injectionID
+joined_df = multi_transformed_df.join(defect_df, ['timestamp', 'device_id'], 'left') # left join on timestamp and device_id
 joined_df.write.mode('overwrite').saveAsTable(config['silver_table']) # write to the silver table
 
 # COMMAND ----------
 
 # DBTITLE 1,Aggregate and get a count of defects
 silver_df = spark.read.table(config['silver_table'])
-summed_df = silver_df.groupBy('defect', 'press').count() # Perform a group by on the defect column to get counts per press type
+summed_df = silver_df.groupBy('defect', 'factory_id').count() # Perform a group by on the defect column to get counts per factory
 summed_df.write.mode('overwrite').saveAsTable(config['gold_table'])
 spark.read.table(config['gold_table']).display()
 
