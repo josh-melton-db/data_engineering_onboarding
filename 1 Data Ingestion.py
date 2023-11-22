@@ -97,7 +97,7 @@ for stream in spark.streams.active:
 
 # COMMAND ----------
 
-# Upload data UI
+# To try this with your own flat file, try the Data Ingestion UI in the Data Engineering menu on the left
 
 # COMMAND ----------
 
