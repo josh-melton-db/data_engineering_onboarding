@@ -15,7 +15,7 @@ pip install dbldatagen
 
 # DBTITLE 1,Run setup
 from utils.onboarding_setup import get_config, iot_data_generator, reset_tables
-config = get_config(spark)
+config = get_config(spark) 
 reset_tables(spark, config, dbutils)
 
 # COMMAND ----------
