@@ -83,7 +83,7 @@ spark.sql(f'''
   ( device_id STRING, timestamp TIMESTAMP, factory_id STRING, 
     option_number BIGINT, model_id STRING, rotation_speed DOUBLE, pressure DOUBLE, 
     temperature DOUBLE, airflow_rate DOUBLE, delay DOUBLE, density DOUBLE )
-  CLUSTER BY (device_id, temperature, factory_id) -- By using clustering keys we speed up queries that use those columns
+  CLUSTER BY (device_id, temperature, option_number) -- By using clustering keys we speed up queries that use those columns
 ''')
 spark.sql(f''' -- By turning on deletion vectors we speed up merges, updates, deletes, and "needle in the haystack" lookups
   ALTER TABLE {config['tuned_bronze_table']} SET TBLPROPERTIES ('delta.enableDeletionVectors' = true);
