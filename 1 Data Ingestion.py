@@ -97,7 +97,8 @@ for stream in spark.streams.active:
 
 # COMMAND ----------
 
-# To try this with your own flat file, try the Data Ingestion UI in the Data Engineering menu on the left
+# MAGIC %md
+# MAGIC To try this with your own flat file, try the Data Ingestion UI in the Data Engineering menu on the left
 
 # COMMAND ----------
 
