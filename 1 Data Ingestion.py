@@ -49,7 +49,8 @@ data.write.option('header', 'true').mode('overwrite').csv(config['csv_staging'])
 
 # COMMAND ----------
 
-# DBTITLE 1,Read new data landing in cloud storage, write to bronze table
+# DBTITLE 1,Read new data from storage
+# Read new data landing in cloud storage, write to bronze table
 bronze_incremental_df = (
   spark.readStream.format('cloudFiles') # load in new data from cloud storage
   .option("cloudFiles.format", "csv") # csv files
@@ -84,6 +85,7 @@ data.write.option('header', 'true').mode('append').csv(config['csv_staging'])
 
 # COMMAND ----------
 
+# DBTITLE 1,Count the total rows
 from time import sleep
 sleep(15) # Wait for newly written files to be picked up
 bronze_df = spark.read.table(config['bronze_table'])
@@ -92,6 +94,7 @@ bronze_df.display()
 
 # COMMAND ----------
 
+# DBTITLE 1,Don't forget to shut down your stream!
 for stream in spark.streams.active:
   stream.stop()
 
