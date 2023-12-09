@@ -65,7 +65,7 @@ bronze_incremental_df = (
   .option('checkpointLocation', config['checkpoint_location'])
   .option("mergeSchema", "true")
   .outputMode('append')
-  # .trigger(availableNow=True)   # Uncommenting this line would "schedule" the ingestion stream instead of running real time
+  # .trigger(availableNow=True)   # Uncommenting this line would "schedule" the incremental ingestion instead of running in real time
   .toTable(config['bronze_table'])
   # .awaitTermination()
 )

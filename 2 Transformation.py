@@ -13,7 +13,6 @@ pip install dbldatagen
 
 # DBTITLE 1,Import demo library and get configuration
 from utils.onboarding_setup import get_config, defect_data_generator
-from pyspark.sql.functions import *
 config = get_config(spark)
 iot_data = spark.read.table(config['bronze_table'])
 defect_data = defect_data_generator(spark, iot_data)

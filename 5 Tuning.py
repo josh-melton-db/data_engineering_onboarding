@@ -36,7 +36,7 @@ def test_etl(target):
           WHEN MATCHED THEN UPDATE SET *
           WHEN NOT MATCHED THEN INSERT *
     ''')
-  iot_data_generator(spark, 1000000).write.mode('append').option('maxRecordsPerFile', '5000').saveAsTable(target)
+  iot_data_generator(spark, 1000000).write.mode('append').option('maxRecordsPerFile', '15000').saveAsTable(target)
 # REPEAT - BAD PRACTICES IN THIS CELL FOR TUNING DEMO PURPOSES ONLY. DO NOT REPLICATE!!!
 
 # COMMAND ----------
